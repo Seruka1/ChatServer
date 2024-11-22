@@ -24,14 +24,49 @@ ChatService::ChatService()
 //实现登陆业务
 void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
-    LOG_INFO << "do login service !!!";
+    int id = js["id"].get<int>();
+    string pwd = js["password"];
+
+    User user = _userModel.query(id);
+    if(user.getId()==id&&user.getPwd()==pwd)
+    {
+        if(user.getState()=="online")
+        {
+            //该用户已经登陆，不允许重复登陆
+            json response;
+            response["msgid"] = LOGIN_MSG_ACK;
+            response["errno"] = 2;
+            response["errmsg"] = "该账号已经登陆，不允许重复登陆";
+            conn->send(response.dump());
+        }
+        else
+        {
+            //登陆成功，更新用户状态信息
+            user.setState("online");
+            json response;
+            response["msgid"] = LOGIN_MSG_ACK;
+            response["errno"] = 0;
+            response["id"] = user.getId();
+            response["name"] = user.getName();
+            conn->send(response.dump());
+        }
+    }
+    else
+    {
+        //用户不存在/密码错误
+        json response;
+        response["msgid"] = LOGIN_MSG_ACK;
+        response["errno"] = 1;
+        response["errmsg"] = "用户不存在/密码错误";
+        conn->send(response.dump());
+    }
 }
 
 //实现注册业务  name，password
 void ChatService::reg(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     string name = js["name"];
-    string pwd = js["pwd"];
+    string pwd = js["password"];
 
     User user;
     user.setName(name);
