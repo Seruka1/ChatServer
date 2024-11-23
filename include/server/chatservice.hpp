@@ -39,10 +39,14 @@ public:
     void addGroup(const TcpConnectionPtr &conn, json &js, Timestamp time);
     //群组聊天业务
     void groupChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    //處理注銷
+    void loginout(const TcpConnectionPtr &conn, json &js, Timestamp time);
+
+    // 处理客户端异常退出
+    void clientCloseException(const TcpConnectionPtr &conn);
+
     // 获取消息对应的处理器
     MsgHandler getHandler(int msgId);
-    //处理客户端异常退出
-    void clientCloseException(const TcpConnectionPtr &conn);
 
 private:
     ChatService();
