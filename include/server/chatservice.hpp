@@ -3,10 +3,14 @@
 
 #include <unordered_map>
 #include <functional>
+#include <mutex>
 
 #include <muduo/net/TcpConnection.h>
 #include "json.hpp"
 #include "usermodel.hpp"
+#include "offlinemessagemodel.hpp"
+#include "friendmodel.hpp"
+#include "groupmodel.hpp"
 using namespace std;
 using namespace muduo;
 using namespace muduo::net;
@@ -25,17 +29,36 @@ public:
     void login(const TcpConnectionPtr &conn, json &js, Timestamp time);
     //处理注册业务
     void reg(const TcpConnectionPtr &conn, json &js, Timestamp time);
-    //获取消息对应的处理器
+    //一对一聊天业务
+    void oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    //添加好友业务
+    void addFriend(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    //创建群组业务
+    void createGroup(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    //加入群组业务
+    void addGroup(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    //群组聊天业务
+    void groupChat(const TcpConnectionPtr &conn, json &js, Timestamp time);
+    // 获取消息对应的处理器
     MsgHandler getHandler(int msgId);
+    //处理客户端异常退出
+    void clientCloseException(const TcpConnectionPtr &conn);
 
 private:
+    ChatService();
+
     //存储消息id和其对应的业务处理方法
     unordered_map<int,MsgHandler> _msgHandlerMap;
 
     //数据操作方法
     UserModel _userModel;
+    OfflineMessageModel _offlineMsgModel;
+    FriendModel _friendModel;
+    GroupModel _groupModel;
 
-    ChatService();
+    //存储在线用户的通信连接(并发写，需要保证线程安全)
+    unordered_map<int, TcpConnectionPtr> _userConnMap;
+    mutex _connMtx;
 };
 
 #endif
