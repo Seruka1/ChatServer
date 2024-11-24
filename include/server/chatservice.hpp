@@ -11,6 +11,7 @@
 #include "offlinemessagemodel.hpp"
 #include "friendmodel.hpp"
 #include "groupmodel.hpp"
+#include "redis.hpp"
 using namespace std;
 using namespace muduo;
 using namespace muduo::net;
@@ -45,8 +46,13 @@ public:
     // 处理客户端异常退出
     void clientCloseException(const TcpConnectionPtr &conn);
 
+    // 服务器异常，业务重置方法
+    void reset();
+
     // 获取消息对应的处理器
     MsgHandler getHandler(int msgId);
+    // 从redis消息队列中获取订阅的消息
+    void handleRedisSubscribeMessage(int, string);
 
 private:
     ChatService();
@@ -63,6 +69,9 @@ private:
     //存储在线用户的通信连接(并发写，需要保证线程安全)
     unordered_map<int, TcpConnectionPtr> _userConnMap;
     mutex _connMtx;
+
+    // redis操作对象
+    Redis _redis;
 };
 
 #endif
